@@ -139,9 +139,9 @@ void Weighted_Eigen::ncio(ibmisc::NcIO &ncio, std::string const &vname,
             dim_extent.push_back(0); // length ignored on read in
             dim_extent_name.push_back(dim_names[i]+".sparse_extent");
         } else {
-            printf("XLR  M->rows() %d\n",M->rows());
-            printf("XLR  M->cols() %d\n",M->cols());
-
+            //printf("XLR  M->rows() %d\n",M->rows());
+            //printf("XLR  M->cols() %d\n",M->cols());
+            //printf("XLR dim_names[i] %s\n",dim_names[i].c_str());
             dim_extent.push_back((i == 0 ? M->rows() : M->cols()));
             dim_extent_name.push_back(dim_names[i]+".sparse_extent");
         //} else {
