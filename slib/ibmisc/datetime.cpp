@@ -25,7 +25,8 @@ static std::array<int,13> init_month_start()
         ++i;
         ret[i] = start;
     }
-    return ret;
+   ret[0] = 0;
+   return ret;
 }
 const std::array<std::string,12> Cal365::month_name3
     {"JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"};
