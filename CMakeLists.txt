@@ -1,6 +1,8 @@
+project(IBMISC)
+
 cmake_minimum_required(VERSION 3.1)
 enable_language(Fortran)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 list (APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 include_directories(${PROJECT_SOURCE_DIR}/slib)

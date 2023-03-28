@@ -3,6 +3,8 @@
 
 #include <map>
 #include <functional>
+#include <algorithm>
+#include <array>
 #include <ibmisc/netcdf.hpp>
 #include <ibmisc/filesystem.hpp>
 

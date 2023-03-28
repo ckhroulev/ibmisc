@@ -20,6 +20,7 @@
 
 #include <tuple>
 #include <ibmisc/array.hpp>
+#include <iostream>
 
 namespace ibmisc {
 
