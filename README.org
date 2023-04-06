@@ -4,50 +4,89 @@
 
 * Build instructions
 
+** Set up environment
+
+#+BEGIN_SRC bash :exports both :results verbatim
+module purge
+
+# started from spack/var/spack/environments/machines/discover12.sh
+# and ~/.spack/linux/compilers.yaml
+# module load comp/gcc/9.2.0 # NO, cannot compile ibmisc with this version
+# module load comp/gcc/9.3.0 # NO
+# module load comp/gcc/10.1.0 # NO
+# module load comp/gcc/10.3.0 # NO
+# module load comp/gcc/11.1.0 # YES
+module load comp/gcc/11.2.0 # YES
+# module load comp/gcc/12.1.0 # NO
+
+module load comp/intel/20.0.0.166
+module load mpi/impi/20.0.0.166
+module load cmake/3.23.1
+#+END_SRC
+
 ** Set up conda environment
 
 #+BEGIN_SRC bash :exports both :results verbatim
-rm -fR ~/local/mambaforge/envs/ibmisc/
+rm -fR /discover/nobackup/kmankoff/local/mambaforge/envs/ibmisc/
 mamba create -n ibmisc # model E land ice
 mamba activate ibmisc
-# mamba install eigen=3.2.8 netcdf-cxx4=4.3.0 proj4 cython gtest boost # MAKE works
 
-mamba install -y eigen=3.2.8 netcdf-cxx4=4.3.0 proj4 cython gtest boost libboost-mpi mpfr
+mamba install -y eigen=3.2.8 netcdf-cxx4=4.3.0 proj4 cython gtest boost udunits boost libboost-mpi
 #+END_SRC
 
-Edit =${CONDA_EXE}/../../envs/meli/include/proj_api.h= and set =#define ACCEPT_USE_OF_DEPRECATED_PROJ_API_H=1=
+Edit conda environment =include/proj_api.h= and set =#define ACCEPT_USE_OF_DEPRECATED_PROJ_API_H=1=
 
 ** Everytrace
 
-In =~/projects/GISS=
+In =/discover/nobackup/kmankoff/src=
 
 #+BEGIN_SRC bash :exports both :results verbatim
-gh repo clone NASA-GISS/everytrace
+git clone git@github.com:NASA-GISS/everytrace
 cd everytrace
+rm -fR build
 mkdir build
-cmake -B build . -DUSE_FORTRAN=YES -DUSE_MPI=YES
 cd build
-make
+
+rm -fR *
+cmake .. \
+      -DUSE_FORTRAN=YES \
+      -DUSE_MPI=YES \
+      -DCMAKE_INSTALL_PREFIX=/discover/nobackup/kmankoff/opt/intel/everytrace
+make -j
+make install
 #+END_SRC
+
+#+BEGIN_EXAMPLE
+-- Set runtime path of "/discover/nobackup/kmankoff/opt/intel/everytrace/lib/libeverytrace.so" to "/discover/nobackup/kmankoff/opt/intel/everytrace/lib:/discover/nobackup/kmankoff/local/micromamba/lib"
+#+END_EXAMPLE
 
 ** Blitz
 
-In =~/projects/GISS=
+In =/discover/nobackup/kmankoff/src=
 
 #+BEGIN_SRC bash :exports both :results verbatim
-gh repo clone blitzpp/blitz
+# gh repo clone blitzpp/blitz
+git clone git@github.com:blitzpp/blitz
 cd blitz
 mkdir build
 cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=./install
-make
+rm -fR *
+cmake .. -DCMAKE_INSTALL_PREFIX=/discover/nobackup/kmankoff/opt/intel/blitz
+make -j
 make install
 #+END_SRC
 
 
 ** IBMISC
 
-In =~/projects/GISS/ibmisc/build=
+In =/discover/nobackup/kmankoff/src=
+
+#+BEGIN_SRC bash :exports both :results verbatim
+git clone -b mankoff/nospack git@github.com:NASA-GISS/ibmisc.git
+cd ibmisc
+#+END_SRC
+
+
 
 #+BEGIN_SRC bash :exports both :results verbatim
 mkdir -p build
@@ -55,32 +94,34 @@ cd build
 
 rm -fR *
 
-export MELI_ROOT=/home/kdm/projects/GISS
-export EVERYTRACE=${MELI_ROOT}/everytrace
-export BLITZ=${MELI_ROOT}/blitz/build/install
-export IBMISC_ENV=${HOME}/local/mambaforge/envs/ibmisc
-export CMAKE_PREFIX_PATH=${IBMISC_ENV}/lib:${IBMISC_ENV}/include:${EVERYTRACE}/slib
-export CMAKE_MODULE_PATH=${IBMISC_ENV}/lib:${IBMISC_ENV}/include
+export MELI_ROOT=${NOBACKUP}
+export EVERYTRACE=${MELI_ROOT}/opt/intel/everytrace
+export BLITZ=${MELI_ROOT}/opt/intel/blitz
+export MAMBA_ENV=${NOBACKUP}/local/mambaforge/envs
+
+export CMAKE_PREFIX_PATH=${MAMBA_ENV}/ibmisc/lib:${MAMBA_ENV}/ibmisc/include:${EVERYTRACE}/slib:nn
+export CMAKE_MODULE_PATH=${MAMBA_ENV}/ibmisc/lib:${MAMBA_ENV}/ibmisc/include
 
 cmake .. \
       -DUSE_BLITZ=YES \
-      -DCMAKE_CXX_FLAGS=-fpermissive \
       -DBLITZ_ROOT=${BLITZ} \
-      -DBLITZ_LIBRARY=${BLITZ}/lib/libblitz.so \
-      -DCMAKE_INSTALL_PREFIX=./install \
-      -DEVERYTRACE_c_REFADDR=${EVERYTRACE}/build/slib \
-      -DEVERYTRACE_INCLUDE_DIR=${EVERYTRACE}/slib \
-      -DEVERYTRACE_LIBRARY=${EVERYTRACE}/build/slib/libeverytrace.so \
-      -DGTEST_LIBRARY_MAIN=${IBMISC_ENV}/lib/libgtest.so \
-      -DNETCDF_C_ROOT=${IBMISC_ENV} \
-      -DNETCDF_CXX4_INCLUDE_DIR=${IBMISC_ENV}/include \
-      -DNETCDF_CXX4_LIBRARY=${IBMISC_ENV}/lib/libnetcdf_c++4.so \
-      -DNETCDF_C_LIBRARY=${IBMISC_ENV}/lib/libnetcdf.so \
-      -DZLIB_INCLUDE_DIRS=${IBMISC_ENV}/include \
-      -DZLIB_LIBRARIES=${IBMISC_ENV}/lib/zlib.so
+      -DBLITZ_LIBRARY=${BLITZ}/lib64/libblitz.so \
+      -DCMAKE_INSTALL_PREFIX=${MELI_ROOT}/opt/intel/ibmisc \
+      -DEVERYTRACE_c_REFADDR=${EVERYTRACE}/lib \
+      -DEVERYTRACE_INCLUDE_DIR=${EVERYTRACE}/include \
+      -DEVERYTRACE_LIBRARY=${EVERYTRACE}/lib/libeverytrace.so \
 
-make
+
+      # -DCMAKE_CXX_FLAGS=-fpermissive \
+      # -DGTEST_LIBRARY_MAIN=${MAMBA_ENV}/ibmisc/lib/libgtest.so \
+      # -DNETCDF_C_ROOT=${MAMBA_ENV}/ibmisc \
+      # -DNETCDF_CXX4_INCLUDE_DIR=${MAMBA_ENV}/ibmisc/include \
+      # -DNETCDF_CXX4_LIBRARY=${MAMBA_ENV}/ibmisc/lib/libnetcdf_c++4.so \
+      # -DNETCDF_C_LIBRARY=${MAMBA_ENV}/ibmisc/lib/libnetcdf.so \
+      # -DZLIB_INCLUDE_DIRS=${MAMBA_ENV}/ibmisc/include \
+      # -DZLIB_LIBRARIES=${MAMBA_ENV}/ibmisc/lib/zlib.so
+
+make -j
 make install
 #+END_SRC
-
 
