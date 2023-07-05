@@ -362,7 +362,11 @@ inline char _filemode_to_rw(char mode)
 
 void NcIO::default_configure_var(netCDF::NcVar ncvar)
 {
+  try {
     ncvar.setCompression(true, true, 4);
+  } catch (...) {
+    // ignore failures
+  }
 
     // For some reason, this causes an HDF5 error
     // ncvar.setChecksum(netCDF::NcVar::nc_FLETCHER32);
